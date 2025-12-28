@@ -390,6 +390,27 @@ function logout() {
     window.location.replace('index.html');
 }
 
+function disconnectWallet() {
+    // Clear wallet connection
+    userAccount = null;
+    localStorage.clear();
+    
+    // Reset connect button
+    const connectBtn = document.getElementById('connectWallet');
+    if (connectBtn) {
+        connectBtn.textContent = '🚀 Connect MetaMask Wallet';
+        connectBtn.disabled = false;
+    }
+    
+    // Hide wallet status and show connect section
+    document.getElementById('walletStatus')?.classList.add('hidden');
+    document.getElementById('registrationSection')?.classList.add('hidden');
+    document.getElementById('alreadyRegisteredSection')?.classList.add('hidden');
+    document.getElementById('walletSection')?.classList.remove('hidden');
+    
+    showAlert('Wallet disconnected. You can now connect a different account.', 'success');
+}
+
 function showLoading(show) {
     const modal = document.getElementById('loadingModal');
     if (modal) modal.classList.toggle('active', show);

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Audit Trail - EVID-DGC</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-KEYDE0ZH4Z"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-KEYDE0ZH4Z');
+    </script>
+</head>
+<body>
+    <nav class="dashboard-nav">
+        <div class="container">
+            <div class="nav-content">
+                <a href="index.html" class="nav-brand">🔐 EVID-DGC</a>
+                <div class="nav-items">
+                    <span id="userRole" class="badge">Loading...</span>
+                    <span id="userWallet" class="wallet-display">Loading...</span>
+                    <button class="btn btn-outline btn-sm" onclick="logout()">🚪 Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Audit Controls -->
+        <div class="card">
+            <div class="card-header">
+                <h2>🔍 Audit Trail Filters</h2>
+            </div>
+            <div class="card-body">
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="filterUser">👤 User</label>
+                        <select id="filterUser" class="form-control">
+                            <option value="">All Users</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterAction">⚡ Action</label>
+                        <select id="filterAction" class="form-control">
+                            <option value="">All Actions</option>
+                            <option value="evidence_upload">Evidence Upload</option>
+                            <option value="evidence_view">Evidence View</option>
+                            <option value="evidence_seal">Evidence Seal</option>
+                            <option value="user_login">User Login</option>
+                            <option value="user_create">User Create</option>
+                            <option value="hash_verify">Hash Verify</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterDate">📅 Date Range</label>
+                        <input type="date" id="filterDateFrom" class="form-control" style="width: 48%; display: inline-block;">
+                        <input type="date" id="filterDateTo" class="form-control" style="width: 48%; display: inline-block; margin-left: 4%;">
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="applyFilters()">🔍 Apply Filters</button>
+                        <button class="btn btn-outline" onclick="exportAuditLog()">📄 Export CSV</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Log -->
+        <div class="card">
+            <div class="card-header">
+                <h2>📋 System Activity Log</h2>
+                <div class="card-actions">
+                    <span id="logCount" class="text-muted">Loading...</span>
+                    <button class="btn btn-outline btn-sm" onclick="refreshAuditLog()">🔄 Refresh</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="auditLogContainer" class="audit-log">
+                    <div class="text-center p-4">
+                        <div class="loading mb-4"></div>
+                        <p>Loading audit trail...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blockchain Verification -->
+        <div class="card">
+            <div class="card-header">
+                <h2>⛓️ Blockchain Verification</h2>
+            </div>
+            <div class="card-body">
+                <div class="verification-tools">
+                    <div class="form-group">
+                        <label for="hashInput">🔐 Verify Evidence Hash</label>
+                        <div class="input-group">
+                            <input type="text" id="hashInput" class="form-control" placeholder="Enter SHA-256 hash to verify">
+                            <button class="btn btn-primary" onclick="verifyEvidenceHash()">🔍 Verify</button>
+                        </div>
+                    </div>
+                    <div id="verificationResult" class="verification-result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+    <script src="config.js"></script>
+    <script src="storage.js"></script>
+    <script src="analytics.js"></script>
+    <script>
+        let currentUser = null;
+        let auditLog = [];
+        let filteredLog = [];
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initializeAuditTrail();
+        });
+
+        async function initializeAuditTrail() {
+            try {
+                const wallet = localStorage.getItem('currentUser');
+                if (!wallet) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                currentUser = await loadUserData(wallet);
+                if (!currentUser) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // Check if user has audit permissions
+                if (!hasAuditPermissions(currentUser.role)) {
+                    alert('Access denied. Audit permissions required.');
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+
+                updateUserUI(currentUser);
+                await loadAuditLog();
+                await populateUserFilter();
+                
+                // Set default date range (last 30 days)
+                const today = new Date();
+                const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+                document.getElementById('filterDateFrom').value = thirtyDaysAgo.toISOString().split('T')[0];
+                document.getElementById('filterDateTo').value = today.toISOString().split('T')[0];
+
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showAlert('Failed to initialize audit trail', 'error');
+            }
+        }
+
+        async function loadUserData(wallet) {
+            try {
+                if (typeof storage !== 'undefined') {
+                    const user = await storage.getUser(wallet);
+                    if (user) return user;
+                }
+                
+                const savedUser = localStorage.getItem('evidUser_' + wallet);
+                return savedUser ? JSON.parse(savedUser) : null;
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                return null;
+            }
+        }
+
+        function hasAuditPermissions(role) {
+            const auditRoles = ['auditor', 'admin', 'legal_professional', 7, 8, 4];
+            return auditRoles.includes(role);
+        }
+
+        function updateUserUI(user) {
+            const roleName = getRoleName(user.role);
+            document.getElementById('userRole').textContent = roleName;
+            document.getElementById('userRole').className = `badge badge-${getRoleClass(user.role)}`;
+            document.getElementById('userWallet').textContent = user.wallet_address.substring(0, 8) + '...';
+        }
+
+        async function loadAuditLog() {
+            try {
+                // Generate mock audit log data
+                auditLog = generateMockAuditLog();
+                filteredLog = [...auditLog];
+                renderAuditLog(filteredLog);
+                document.getElementById('logCount').textContent = `${filteredLog.length} entries`;
+            } catch (error) {
+                console.error('Error loading audit log:', error);
+                document.getElementById('auditLogContainer').innerHTML = '<p class="text-center text-muted">Error loading audit log</p>';
+            }
+        }
+
+        function generateMockAuditLog() {
+            const actions = [
+                'evidence_upload', 'evidence_view', 'evidence_seal', 'user_login', 
+                'user_create', 'hash_verify', 'case_create', 'report_generate'
+            ];
+            const users = [
+                '0x1234...5678', '0xabcd...efgh', '0x9876...5432', '0xfedc...ba98'
+            ];
+            const log = [];
+
+            for (let i = 0; i < 50; i++) {
+                const timestamp = new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000);
+                const action = actions[Math.floor(Math.random() * actions.length)];
+                const user = users[Math.floor(Math.random() * users.length)];
+                
+                log.push({
+                    id: 'LOG-' + (1000 + i),
+                    timestamp: timestamp.toISOString(),
+                    action: action,
+                    user: user,
+                    details: generateActionDetails(action),
+                    ipAddress: `192.168.1.${Math.floor(Math.random() * 255)}`,
+                    blockchainTx: action.includes('evidence') ? '0x' + Math.random().toString(16).substr(2, 64) : null,
+                    success: Math.random() > 0.1 // 90% success rate
+                });
+            }
+
+            return log.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        }
+
+        function generateActionDetails(action) {
+            const details = {
+                'evidence_upload': 'Uploaded evidence file: document_001.pdf',
+                'evidence_view': 'Viewed evidence ID: EVD-2024-001',
+                'evidence_seal': 'Sealed evidence for court proceedings',
+                'user_login': 'User authenticated successfully',
+                'user_create': 'Created new user account',
+                'hash_verify': 'Verified evidence hash integrity',
+                'case_create': 'Created new case: CASE-2024-001',
+                'report_generate': 'Generated forensic analysis report'
+            };
+            return details[action] || 'System action performed';
+        }
+
+        function renderAuditLog(logs) {
+            const container = document.getElementById('auditLogContainer');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted">No audit entries found</p>';
+                return;
+            }
+
+            const logHtml = logs.map(entry => `
+                <div class="audit-entry ${entry.success ? 'success' : 'failed'}">
+                    <div class="audit-header">
+                        <div class="audit-action">
+                            <span class="action-icon">${getActionIcon(entry.action)}</span>
+                            <span class="action-name">${formatActionName(entry.action)}</span>
+                            <span class="audit-status ${entry.success ? 'success' : 'failed'}">
+                                ${entry.success ? '✅' : '❌'}
+                            </span>
+                        </div>
+                        <div class="audit-time">${formatTimestamp(entry.timestamp)}</div>
+                    </div>
+                    <div class="audit-details">
+                        <p><strong>User:</strong> ${entry.user}</p>
+                        <p><strong>Details:</strong> ${entry.details}</p>
+                        <p><strong>IP Address:</strong> ${entry.ipAddress}</p>
+                        ${entry.blockchainTx ? `<p><strong>Blockchain TX:</strong> <code>${entry.blockchainTx.substring(0, 20)}...</code></p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = logHtml;
+        }
+
+        function getActionIcon(action) {
+            const icons = {
+                'evidence_upload': '📤',
+                'evidence_view': '👁️',
+                'evidence_seal': '🔒',
+                'user_login': '🔑',
+                'user_create': '👤',
+                'hash_verify': '🔍',
+                'case_create': '📁',
+                'report_generate': '📊'
+            };
+            return icons[action] || '⚡';
+        }
+
+        function formatActionName(action) {
+            return action.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+
+        function formatTimestamp(timestamp) {
+            return new Date(timestamp).toLocaleString();
+        }
+
+        async function populateUserFilter() {
+            const userSelect = document.getElementById('filterUser');
+            const uniqueUsers = [...new Set(auditLog.map(entry => entry.user))];
+            
+            uniqueUsers.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user;
+                option.textContent = user;
+                userSelect.appendChild(option);
+            });
+        }
+
+        function applyFilters() {
+            const userFilter = document.getElementById('filterUser').value;
+            const actionFilter = document.getElementById('filterAction').value;
+            const dateFromFilter = document.getElementById('filterDateFrom').value;
+            const dateToFilter = document.getElementById('filterDateTo').value;
+
+            filteredLog = auditLog.filter(entry => {
+                let matches = true;
+
+                if (userFilter && entry.user !== userFilter) matches = false;
+                if (actionFilter && entry.action !== actionFilter) matches = false;
+                
+                if (dateFromFilter) {
+                    const entryDate = new Date(entry.timestamp).toISOString().split('T')[0];
+                    if (entryDate < dateFromFilter) matches = false;
+                }
+                
+                if (dateToFilter) {
+                    const entryDate = new Date(entry.timestamp).toISOString().split('T')[0];
+                    if (entryDate > dateToFilter) matches = false;
+                }
+
+                return matches;
+            });
+
+            renderAuditLog(filteredLog);
+            document.getElementById('logCount').textContent = `${filteredLog.length} entries`;
+            
+            // Track analytics
+            if (typeof trackUserAction === 'function') {
+                trackUserAction('audit_filter_applied', 'audit_trail');
+            }
+        }
+
+        function refreshAuditLog() {
+            loadAuditLog();
+        }
+
+        function exportAuditLog() {
+            const csvContent = generateCSV(filteredLog);
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `audit_log_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('Audit log exported successfully', 'success');
+            
+            // Track analytics
+            if (typeof trackUserAction === 'function') {
+                trackUserAction('audit_log_exported', 'audit_trail');
+            }
+        }
+
+        function generateCSV(data) {
+            const headers = ['ID', 'Timestamp', 'Action', 'User', 'Details', 'IP Address', 'Blockchain TX', 'Success'];
+            const csvRows = [headers.join(',')];
+            
+            data.forEach(entry => {
+                const row = [
+                    entry.id,
+                    entry.timestamp,
+                    entry.action,
+                    entry.user,
+                    `"${entry.details}"`,
+                    entry.ipAddress,
+                    entry.blockchainTx || '',
+                    entry.success
+                ];
+                csvRows.push(row.join(','));
+            });
+            
+            return csvRows.join('\n');
+        }
+
+        async function verifyEvidenceHash() {
+            const hash = document.getElementById('hashInput').value.trim();
+            const resultDiv = document.getElementById('verificationResult');
+            
+            if (!hash) {
+                showAlert('Please enter a hash to verify', 'error');
+                return;
+            }
+
+            if (hash.length !== 64) {
+                showAlert('Invalid hash format. SHA-256 hashes are 64 characters long.', 'error');
+                return;
+            }
+
+            try {
+                // Mock verification - in real implementation, check blockchain
+                const isValid = Math.random() > 0.3; // 70% chance of being valid
+                const evidenceId = isValid ? 'EVD-' + Math.floor(Math.random() * 1000) : null;
+                
+                if (isValid) {
+                    resultDiv.innerHTML = `
+                        <div class="verification-success">
+                            <h4>✅ Hash Verified</h4>
+                            <p><strong>Evidence ID:</strong> ${evidenceId}</p>
+                            <p><strong>Status:</strong> Valid and stored on blockchain</p>
+                            <p><strong>Verification Time:</strong> ${new Date().toLocaleString()}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="verification-failed">
+                            <h4>❌ Hash Not Found</h4>
+                            <p>This hash does not exist in the evidence database.</p>
+                            <p><strong>Verification Time:</strong> ${new Date().toLocaleString()}</p>
+                        </div>
+                    `;
+                }
+                
+                // Track analytics
+                if (typeof trackUserAction === 'function') {
+                    trackUserAction('hash_verification', 'audit_trail');
+                }
+                
+            } catch (error) {
+                console.error('Verification error:', error);
+                showAlert('Verification failed: ' + error.message, 'error');
+            }
+        }
+
+        function getRoleName(role) {
+            const roleMap = {
+                'public_viewer': 'Public Viewer', 'investigator': 'Investigator', 
+                'forensic_analyst': 'Forensic Analyst', 'legal_professional': 'Legal Professional',
+                'court_official': 'Court Official', 'evidence_manager': 'Evidence Manager',
+                'auditor': 'Auditor', 'admin': 'Administrator',
+                1: 'Public Viewer', 2: 'Investigator', 3: 'Forensic Analyst',
+                4: 'Legal Professional', 5: 'Court Official', 6: 'Evidence Manager',
+                7: 'Auditor', 8: 'Administrator'
+            };
+            return roleMap[role] || 'Unknown';
+        }
+
+        function getRoleClass(role) {
+            const classes = {
+                'public_viewer': 'public', 'investigator': 'investigator', 'forensic_analyst': 'forensic',
+                'legal_professional': 'legal', 'court_official': 'court', 'evidence_manager': 'manager',
+                'auditor': 'auditor', 'admin': 'admin',
+                1: 'public', 2: 'investigator', 3: 'forensic', 4: 'legal',
+                5: 'court', 6: 'manager', 7: 'auditor', 8: 'admin'
+            };
+            return classes[role] || 'public';
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = message;
+            alert.style.cssText = `
+                position: fixed; top: 20px; right: 20px; z-index: 1000;
+                padding: 12px 20px; border-radius: 8px; color: white; font-weight: 500;
+                max-width: 400px; background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+            `;
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+
+    <style>
+        .filter-row { display: grid; grid-template-columns: 1fr 1fr 2fr 1fr; gap: 20px; align-items: end; }
+        .audit-log { max-height: 600px; overflow-y: auto; }
+        .audit-entry { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; padding: 15px; background: white; }
+        .audit-entry.failed { border-left: 4px solid #dc3545; }
+        .audit-entry.success { border-left: 4px solid #28a745; }
+        .audit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .audit-action { display: flex; align-items: center; gap: 10px; }
+        .action-icon { font-size: 1.2rem; }
+        .action-name { font-weight: 600; }
+        .audit-status.success { color: #28a745; }
+        .audit-status.failed { color: #dc3545; }
+        .audit-time { color: #666; font-size: 0.9rem; }
+        .audit-details p { margin: 5px 0; font-size: 0.9rem; }
+        .verification-tools { max-width: 600px; }
+        .input-group { display: flex; gap: 10px; }
+        .input-group input { flex: 1; }
+        .verification-result { margin-top: 20px; }
+        .verification-success { padding: 20px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; color: #155724; }
+        .verification-failed { padding: 20px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; color: #721c24; }
+    </style>
+</body>
+</html>

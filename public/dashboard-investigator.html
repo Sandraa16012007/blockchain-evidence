@@ -63,6 +63,9 @@
                     <button class="btn btn-outline" onclick="showUploadEvidence()">
                         📤 Upload Evidence
                     </button>
+                    <button class="btn btn-outline" onclick="showAuditTrail()">
+                        📊 Audit Trail
+                    </button>
                 </div>
             </div>
         </div>
@@ -362,7 +365,11 @@
         }
 
         function showUploadEvidence() {
-            alert('Evidence upload functionality coming soon!');
+            window.location.href = 'evidence-manager.html';
+        }
+
+        function showAuditTrail() {
+            window.location.href = 'audit-trail.html';
         }
 
         function getStatusClass(status) {
