@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const rateLimit = require('express-rate-limit');
+const authRoutes = require("./routes/auth.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -199,7 +200,7 @@ const checkCasePermission = async (req, res, next) => {
 };
 
 // API Routes
-
+app.use("/api/auth", authRoutes);
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
