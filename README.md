@@ -116,9 +116,13 @@ The system implements 8 distinct roles to ensure strict access control:
 │   ├── app.js              # Core frontend logic
 │   └── styles.css          # Global styling
 ├── server.js                # Express backend server with Socket.IO
-├── database-schema.sql      # Supabase database structure
+├── complete-database-setup.sql # Complete core database structure
+├── evidence-tagging-schema.sql # Tags system database schema
+├── evidence-export-schema.sql  # Export system database schema
+├── REAL_TIME_NOTIFICATIONS.md # Notifications implementation details
 ├── render.yaml              # Deployment configuration for Render
 ├── package.json             # Node.js dependencies and scripts
+├── SECURITY.md              # Security policy and reporting
 └── README.md                # Project documentation
 ```
 
@@ -132,7 +136,7 @@ The system implements 8 distinct roles to ensure strict access control:
 - 🔧 [API Reference](docs/API_DOCUMENTATION.md)
 - 👥 [User Roles Guide](docs/USER_ROLES.md)
 - 🚨 [Troubleshooting](docs/TROUBLESHOOTING.md)
-- 🤝 [Contributing](CONTRIBUTING.md)
+- 🤝 [Contributing](Contributing.md)
 
 ### Complete Documentation
 
@@ -145,7 +149,7 @@ The system implements 8 distinct roles to ensure strict access control:
 | **API Documentation** | Complete API reference and examples | [📡 API Docs](docs/API_DOCUMENTATION.md) |
 | **User Roles** | Roles, permissions, and access control | [👤 User Roles](docs/USER_ROLES.md) |
 | **Troubleshooting** | Common issues and solutions | [🔧 Troubleshooting](docs/TROUBLESHOOTING.md) |
-| **Contributing** | How to contribute to the project | [🤝 Contributing](CONTRIBUTING.md) |
+| **Contributing** | How to contribute to the project | [🤝 Contributing](Contributing.md) |
 
 ---
 
@@ -173,8 +177,8 @@ cp .env.example .env
 ### 2. Database Setup
 ```sql
 -- Run in Supabase SQL Editor:
--- 1. Execute database-schema.sql
--- 2. Execute setup-first-admin.sql with your wallet address
+-- 1. Execute complete-database-setup.sql
+-- 2. Note: You can edit the initial admin wallet address at the end of the file before running.
 ```
 
 ### 3. Start Application
@@ -201,7 +205,7 @@ We value your feedback! If you have suggestions for new features or have found a
 ---
 
 ## 🤝 Contribution Guidelines
-Contributions are welcome! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+Contributions are welcome! Please read our [Contributing.md](Contributing.md) for details on our code of conduct and the process for submitting pull requests.
 
 ---
 
