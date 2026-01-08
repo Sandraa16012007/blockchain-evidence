@@ -7,6 +7,7 @@
     <title>Legal | EVID-DGC</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="navbar.js"></script>
     <style>
         .legal-hero {
             background: linear-gradient(135deg, #dc2626, #ef4444);
@@ -38,24 +39,7 @@
 </head>
 
 <body>
-    <nav class="navbar">
-        <div class="navbar-left">
-            <div class="navbar-brand">
-                <i data-lucide="shield-check"></i>
-                <span>EVID-DGC</span>
-            </div>
-        </div>
-        <div class="navbar-right">
-            <div class="user-info-nav">
-                <span class="user-role" id="userRole">⚖️ Legal Professional</span>
-                <span class="user-wallet" id="userWallet">Loading...</span>
-            </div>
-            <button class="logout-btn" onclick="logout()">
-                <i data-lucide="log-out"></i>
-                <span>Logout</span>
-            </button>
-        </div>
-    </nav>
+    <!-- Navbar will be injected by navbar.js -->
 
     <div class="legal-hero">
         <div class="container">
