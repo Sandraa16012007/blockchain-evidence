@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "frontend": "cd public && python -m http.server 8080",
+    "health": "node health-check.js",
     "test": "node tests/ComprehensiveTestRunner.js",
     "test:forensic": "node tests/ComprehensiveTestRunner.js --no-load",
     "test:load": "node tests/ComprehensiveTestRunner.js --no-forensic",
@@ -14,7 +14,9 @@
     "test:load:heavy": "node tests/ComprehensiveTestRunner.js --no-forensic --load-level=heavy",
     "test:load:stress": "node tests/ComprehensiveTestRunner.js --no-forensic --load-level=stress",
     "test:headed": "node tests/ComprehensiveTestRunner.js --headed",
-    "test:ci": "node tests/ComprehensiveTestRunner.js --no-report"
+    "test:ci": "node tests/ComprehensiveTestRunner.js --no-report",
+    "lint": "echo 'Linting not configured'",
+    "build": "echo 'Build not required for this project'"
   },
   "keywords": [
     "blockchain",
@@ -30,13 +32,20 @@
   ],
   "author": "EVID-DGC Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gooichand/blockchain-evidence.git"
+  },
+  "homepage": "https://github.com/Gooichand/blockchain-evidence#readme",
+  "bugs": {
+    "url": "https://github.com/Gooichand/blockchain-evidence/issues"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "archiver": "^6.0.1",
     "bull": "^4.12.2",
     "color-hash": "^2.0.2",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "date-fns": "^2.30.0",
     "dotenv": "^17.2.3",
     "express": "^4.18.2",

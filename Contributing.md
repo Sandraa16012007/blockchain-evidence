@@ -19,9 +19,8 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 ### Development Setup
 1. **Fork the Repository**
    ```bash
-   # Click "Fork" on GitHub
    # Clone your fork
-   git clone https://github.com/YOUR_USERNAME/blockchain-evidence.git
+   git clone <your-fork-url>
    cd blockchain-evidence
    ```
 
@@ -50,13 +49,13 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 ## How to Contribute
 
 ### 1. Reporting Issues
-- Use GitHub Issues to report bugs
+- Use your repository's issue tracker to report bugs
 - Include detailed reproduction steps
 - Provide browser/OS information
 - Add screenshots if helpful
 
 ### 2. Suggesting Features
-- Open a GitHub Issue with "Feature Request" label
+- Open an issue with "Feature Request" label
 - Describe the feature and use case
 - Explain why it would be valuable
 - Consider implementation complexity
@@ -359,16 +358,10 @@ Contributors will be recognized in:
 
 ## 👥 Contributors
 
-<p align="left">
-  <a href="https://github.com/Gooichand/blockchain-evidence/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=Gooichand/blockchain-evidence" alt="Contributors" />
-  </a>
-</p>
-
-See the full list of contributors and their contributions on the [`GitHub Contributors Graph`](https://github.com/Gooichand/blockchain-evidence/graphs/contributors).
+Contributors will be recognized in project documentation and release notes.
 
 <h2 align="center">
-<p style="font-family:var(--ff-philosopher);font-size:3rem;"><b> Show some <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" /> by starring this awesome repository!
+<p style="font-family:var(--ff-philosopher);font-size:3rem;"><b> Show some ❤️ by starring this awesome repository!
 </p>
 </h2>
 
@@ -380,16 +373,14 @@ See the full list of contributors and their contributions on the [`GitHub Contri
 
 ## 📊 Repository Stats
 
-[![GitHub stars](https://img.shields.io/github/stars/Gooichand/blockchain-evidence?style=social)](https://github.com/Gooichand/blockchain-evidence/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/Gooichand/blockchain-evidence?style=social)](https://github.com/Gooichand/blockchain-evidence/network/members)
-[![GitHub contributors](https://img.shields.io/github/contributors/Gooichand/blockchain-evidence)](https://github.com/Gooichand/blockchain-evidence/graphs/contributors)
+Project statistics and metrics will be available in your repository dashboard.
 
 
 
 ## Questions?
 
-- Check existing [Issues](https://github.com/Gooichand/blockchain-evidence/issues)
+- Check existing issues in your repository
 - Read the [Documentation](docs/)
-- Start a [Discussion](https://github.com/Gooichand/blockchain-evidence/discussions)
+- Start a discussion in your repository
 
 Thank you for contributing to EVID-DGC! 🚀

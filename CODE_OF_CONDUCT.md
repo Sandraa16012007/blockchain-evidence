@@ -45,7 +45,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Reporting
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at **DGC2MHNE@proton.me**. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at **contact@project.local**. All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 
@@ -120,8 +120,8 @@ For answers to common questions about this code of conduct, see the FAQ at [http
 ---
 
 **Contact Information:**
-- **General Conduct Issues**: DGC2MHNE@proton.me
-- **Security Concerns**:DGC2MHNE@proton.me
-- **Project Maintainers**: DGC2MHNE@proton.me
+- **General Conduct Issues**: contact@project.local
+- **Security Concerns**: security@project.local
+- **Project Maintainers**: maintainers@project.local
 
 *This Code of Conduct is designed to ensure EVID-DGC maintains the highest standards of professionalism required for evidence management systems used in legal and law enforcement contexts.*

@@ -91,8 +91,10 @@
 
     <script src="config.js?v=8"></script>
     <script src="storage.js?v=8"></script>
+    <script src="role-manager.js"></script>
     <script src="role-navigation.js"></script>
     <script src="analytics.js"></script>
+    <script src="dashboard-fix.js"></script>
     <script>
         // Role mapping for dashboard routing
         const ROLE_DASHBOARDS = {
@@ -156,29 +158,32 @@
                 updateProgress('Checking authentication...', 30);
                 await new Promise(resolve => setTimeout(resolve, 500));
 
+                // Check if user has selected a role using role manager
+                if (typeof roleManager !== 'undefined' && !roleManager.isRoleSelected()) {
+                    throw new Error('No role selected. Please complete role selection.');
+                }
+
+                const selectedRole = localStorage.getItem('selectedRole');
                 const userAccount = localStorage.getItem('currentUser');
+                
+                console.log('Dashboard router - selectedRole:', selectedRole);
                 console.log('Dashboard router - userAccount:', userAccount);
 
-                if (!userAccount) {
-                    throw new Error('No user account found. Please log in again.');
+                if (!selectedRole) {
+                    throw new Error('No role selected. Please log in again.');
                 }
 
                 updateProgress('Loading user profile...', 50);
                 await new Promise(resolve => setTimeout(resolve, 500));
 
-                // Get user data
-                let userInfo = await getUserInfo(userAccount);
-
-                if (!userInfo) {
-                    throw new Error('User profile not found. Please register again.');
-                }
+                // Create user info from role selection
+                const userInfo = {
+                    role: selectedRole,
+                    fullName: 'User',
+                    walletAddress: userAccount
+                };
 
                 updateProgress('Preparing dashboard...', 70);
-
-                // Initialize role-based navigation
-                if (window.RoleNavigation) {
-                    window.RoleNavigation.initializeRoleNavigation();
-                }
 
                 // Update navbar with user info
                 updateNavbarUserInfo(userInfo, userAccount);
@@ -186,14 +191,17 @@
                 updateProgress('Redirecting to dashboard...', 90);
                 await new Promise(resolve => setTimeout(resolve, 500));
 
-                // Route to appropriate dashboard
-                const dashboardUrl = getDashboardUrl(userInfo.role);
-                console.log(`Redirecting ${userInfo.role} to ${dashboardUrl}`);
+                // Route to appropriate dashboard using role manager
+                const dashboardUrl = typeof roleManager !== 'undefined' 
+                    ? roleManager.getDashboardUrl(selectedRole)
+                    : getDashboardUrl(selectedRole);
+                    
+                console.log(`Redirecting ${selectedRole} to ${dashboardUrl}`);
 
                 // Track dashboard access
                 if (typeof gtag === 'function') {
                     gtag('event', 'dashboard_access', {
-                        'user_role': ROLE_NAMES[userInfo.role] || 'Unknown',
+                        'user_role': ROLE_NAMES[selectedRole] || 'Unknown',
                         'dashboard_url': dashboardUrl
                     });
                 }

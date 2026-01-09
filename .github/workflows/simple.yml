@@ -1,4 +1,4 @@
-name: ✅ Simple Check
+name: ✅ Build Check
 
 on:
   push:

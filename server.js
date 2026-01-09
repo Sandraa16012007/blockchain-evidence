@@ -16,11 +16,13 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*",
+        origin: process.env.NODE_ENV === 'production' 
+            ? ["https://your-domain.com"] 
+            : ["http://localhost:3000", "http://127.0.0.1:3000"],
         methods: ["GET", "POST"]
     }
 });
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Supabase configuration
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -119,7 +121,12 @@ const notifyMultipleUsers = async (userWallets, title, message, type, data = {})
 };
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production' 
+        ? process.env.ALLOWED_ORIGINS?.split(',') || ['https://your-domain.com']
+        : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    credentials: true
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 
@@ -155,7 +162,18 @@ const upload = multer({
         } else {
             cb(new Error(`File type ${file.mimetype} not supported`), false);
         }
+    },
+    onError: (err, next) => {
+        console.error('Multer error:', err);
+        next(err);
     }
+});
+
+// Authentication rate limiting
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // limit each IP to 5 requests per windowMs for auth
+    message: { error: 'Too many authentication attempts, please try again later' }
 });
 
 // Rate limiting
@@ -471,7 +489,7 @@ app.post('/api/notifications/create', async (req, res) => {
 });
 
 // Get user by wallet address
-app.get('/api/user/:wallet', async (req, res) => {
+app.get('/api/user/:wallet', authLimiter, async (req, res) => {
     try {
         const { wallet } = req.params;
 
@@ -744,9 +762,24 @@ app.post('/api/evidence/upload', upload.single('file'), async (req, res) => {
         const { caseId, type, description, location, collectionDate, uploadedBy } = req.body;
         const file = req.file;
 
+        // Input validation
         if (!file) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
+
+        if (!caseId || !type || !uploadedBy) {
+            return res.status(400).json({ error: 'Case ID, type, and uploader are required' });
+        }
+
+        if (!validateWalletAddress(uploadedBy)) {
+            return res.status(400).json({ error: 'Invalid uploader wallet address' });
+        }
+
+        // Sanitize inputs
+        const sanitizedCaseId = String(caseId).trim();
+        const sanitizedType = String(type).trim();
+        const sanitizedDescription = description ? String(description).trim() : '';
+        const sanitizedLocation = location ? String(location).trim() : '';
 
         // File validation
         const allowedTypes = {
@@ -790,12 +823,12 @@ app.post('/api/evidence/upload', upload.single('file'), async (req, res) => {
         // Create evidence record
         const evidenceData = {
             id: 'EVD-' + Date.now(),
-            caseId,
-            type,
-            description,
-            location,
+            caseId: sanitizedCaseId,
+            type: sanitizedType,
+            description: sanitizedDescription,
+            location: sanitizedLocation,
             collectionDate,
-            fileName: file.name,
+            fileName: file.originalname,
             fileSize: file.size,
             mimeType: file.mimetype,
             hash,

@@ -28,8 +28,8 @@ If you discover a security vulnerability, please report it responsibly:
 - Smart contract vulnerabilities
 - Blockchain integrity issues
 
-**📧 Contact:** security@evid-dgc.org  
-**🔐 PGP Key:** [Download Public Key](https://evid-dgc.org/pgp-key.asc)  
+**📧 Contact:** security@project.local  
+**🔐 PGP Key:** Available upon request  
 **⏱️ Response Time:** Within 4 hours
 
 ### Standard Security Issues
@@ -41,7 +41,7 @@ If you discover a security vulnerability, please report it responsibly:
 - Information disclosure
 - Denial of service vulnerabilities
 
-**📧 Contact:** security@evid-dgc.org  
+**📧 Contact:** security@project.local  
 **⏱️ Response Time:** Within 24-48 hours
 
 ### What to Include in Your Report
@@ -171,30 +171,30 @@ We appreciate security researchers who help keep EVID-DGC secure:
 
 ### Notification Channels
 
-- **📧 Email**: security-updates@evid-dgc.org
-- **📱 GitHub**: Security advisories on repository
-- **🌐 Website**: Security bulletins at evid-dgc.org/security
-- **📢 Social Media**: @EvidDGC on Twitter for major announcements
+- **📧 Email**: security-updates@project.local
+- **📱 Repository**: Security advisories in your repository
+- **🌐 Website**: Security bulletins on your project website
+- **📢 Social Media**: Project social media for major announcements
 
 ## 📞 Contact Information
 
 ### Security Team
 
-- **🔒 Security Officer**: security-officer@evid-dgc.org
-- **🛡️ Security Team**: security@evid-dgc.org
-- **📞 Emergency Hotline**: +1-XXX-XXX-XXXX (24/7 for critical issues)
+- **🔒 Security Officer**: security-officer@project.local
+- **🛡️ Security Team**: security@project.local
+- **📞 Emergency Hotline**: Contact through repository issues for critical issues
 
 ### Legal and Compliance
 
-- **⚖️ Legal Team**: legal@evid-dgc.org
-- **📋 Compliance Officer**: compliance@evid-dgc.org
-- **🏛️ Law Enforcement Liaison**: leo@evid-dgc.org
+- **⚖️ Legal Team**: legal@project.local
+- **📋 Compliance Officer**: compliance@project.local
+- **🏛️ Law Enforcement Liaison**: leo@project.local
 
 ---
 
 ## 📝 Disclaimer
 
-This security policy is subject to change. Please check regularly for updates. The latest version is always available at: https://github.com/Gooichand/blockchain-evidence/security/policy
+This security policy is subject to change. Please check regularly for updates. The latest version is always available in your project repository.
 
 **Last Updated**: December 2024  
 **Version**: 2.0  

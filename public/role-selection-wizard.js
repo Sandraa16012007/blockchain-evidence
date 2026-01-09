@@ -26,7 +26,7 @@ class RoleSelectionWizard {
                 icon: 'microscope',
                 description: 'Analyze digital evidence and create technical reports',
                 permissions: ['Analyze evidence', 'Create technical reports', 'Verify file integrity', 'Digital forensics'],
-                dashboard: 'dashboard-forensic.html'
+                dashboard: 'dashboard-analyst.html'
             },
             {
                 id: 'legal_professional',
@@ -50,7 +50,7 @@ class RoleSelectionWizard {
                 icon: 'archive',
                 description: 'Oversee evidence storage and chain of custody',
                 permissions: ['Evidence custody', 'Storage management', 'Chain of custody', 'Evidence tracking'],
-                dashboard: 'dashboard-evidence.html'
+                dashboard: 'dashboard-manager.html'
             },
             {
                 id: 'auditor',
@@ -196,15 +196,34 @@ class RoleSelectionWizard {
         }
     }
 
-    async proceed() {
-        if (!this.selectedRole) return;
+    async function proceed() {
+        if (!this.selectedRole) {
+            this.showError('Please select a role first.');
+            return;
+        }
         
         const role = this.roles.find(r => r.id === this.selectedRole);
         
         try {
-            // Store role selection
+            // Store role selection with timestamp
             localStorage.setItem('selectedRole', this.selectedRole);
             localStorage.setItem('roleWizardCompleted', 'true');
+            localStorage.setItem('roleSelectedAt', new Date().toISOString());
+            
+            // Store user data
+            const userData = {
+                role: this.selectedRole,
+                fullName: 'User',
+                walletAddress: this.userWallet,
+                isRegistered: true,
+                registrationDate: new Date().toISOString(),
+                accountType: 'role_selected'
+            };
+            
+            if (this.userWallet) {
+                localStorage.setItem('evidUser_' + this.userWallet, JSON.stringify(userData));
+                localStorage.setItem('currentUser', this.userWallet);
+            }
             
             // Log role selection
             await this.logRoleSelection();
@@ -215,7 +234,7 @@ class RoleSelectionWizard {
             // Redirect after delay
             setTimeout(() => {
                 window.location.href = role.dashboard;
-            }, 2000);
+            }, 1500);
             
         } catch (error) {
             console.error('Role selection error:', error);
@@ -314,11 +333,20 @@ function showRoleWizard(walletAddress) {
     if (localStorage.getItem('roleWizardCompleted') === 'true') {
         const selectedRole = localStorage.getItem('selectedRole');
         if (selectedRole) {
-            const role = roleWizard?.roles.find(r => r.id === selectedRole);
-            if (role) {
-                window.location.href = role.dashboard;
-                return;
-            }
+            const roleMapping = {
+                'public_viewer': 'dashboard-public.html',
+                'investigator': 'dashboard-investigator.html',
+                'forensic_analyst': 'dashboard-analyst.html',
+                'legal_professional': 'dashboard-legal.html',
+                'court_official': 'dashboard-court.html',
+                'evidence_manager': 'dashboard-manager.html',
+                'auditor': 'dashboard-auditor.html',
+                'admin': 'admin.html'
+            };
+            
+            const dashboardUrl = roleMapping[selectedRole] || 'dashboard.html';
+            window.location.href = dashboardUrl;
+            return;
         }
     }
     

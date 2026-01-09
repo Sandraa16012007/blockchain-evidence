@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Hold Management | EVID-DGC</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="retention-policy-styles.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <header class="header-nav">
+        <div class="navbar-container">
+            <div class="nav-brand">
+                <i data-lucide="shield-check" class="brand-icon"></i>
+                <span>EVID-DGC</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="dashboard.html" class="nav-link">
+                    <i data-lucide="arrow-left"></i>
+                    <span>Back to Dashboard</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Legal Hold Banner (shown when evidence is under legal hold) -->
+        <div id="legalHoldBanner" class="legal-hold-banner hidden">
+            <div class="banner-content">
+                <div class="banner-icon">
+                    <i data-lucide="shield-alert"></i>
+                </div>
+                <div class="banner-text">
+                    <h3>Legal Hold Active</h3>
+                    <p>This evidence is under legal hold. Modifications and deletions are prohibited.</p>
+                </div>
+                <div class="banner-actions">
+                    <button class="btn btn-outline btn-sm" onclick="viewLegalHoldDetails()">
+                        View Details
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legal Hold Management -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i data-lucide="shield-alert"></i>
+                </div>
+                <h1>Legal Hold Management</h1>
+                <p>Manage legal holds to prevent evidence deletion and modification during litigation</p>
+            </div>
+            <div class="card-body">
+                <div class="legal-hold-controls">
+                    <button class="btn btn-primary" onclick="openCreateLegalHoldModal()">
+                        <i data-lucide="plus"></i>
+                        Create Legal Hold
+                    </button>
+                    <div class="hold-filters">
+                        <select id="holdStatusFilter" onchange="filterLegalHolds()">
+                            <option value="all">All Holds</option>
+                            <option value="active">Active</option>
+                            <option value="released">Released</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                        <input type="text" id="holdSearchInput" placeholder="Search holds..." onkeyup="searchLegalHolds()">
+                    </div>
+                </div>
+
+                <div class="legal-holds-grid" id="legalHoldsGrid">
+                    <!-- Legal holds will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Retention Policy Management -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i data-lucide="calendar-clock"></i>
+                </div>
+                <h2>Retention Policy Management</h2>
+                <p>Configure evidence retention policies by type and jurisdiction</p>
+            </div>
+            <div class="card-body">
+                <div class="retention-policy-controls">
+                    <button class="btn btn-primary" onclick="openCreatePolicyModal()">
+                        <i data-lucide="plus"></i>
+                        Create Policy
+                    </button>
+                    <div class="policy-stats">
+                        <div class="stat-item">
+                            <span class="stat-number" id="activePoliciesCount">0</span>
+                            <span class="stat-label">Active Policies</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="evidenceUnderPolicyCount">0</span>
+                            <span class="stat-label">Evidence Under Policy</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="expiringEvidenceCount">0</span>
+                            <span class="stat-label">Expiring Soon</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="retention-policies-grid" id="retentionPoliciesGrid">
+                    <!-- Retention policies will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Expiring Evidence -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i data-lucide="clock-alert"></i>
+                </div>
+                <h2>Expiring Evidence</h2>
+                <p>Evidence approaching retention expiry dates</p>
+            </div>
+            <div class="card-body">
+                <div class="expiry-filters">
+                    <select id="expiryTimeframe" onchange="loadExpiringEvidence()">
+                        <option value="7">Next 7 days</option>
+                        <option value="30">Next 30 days</option>
+                        <option value="90">Next 90 days</option>
+                        <option value="0">Already expired</option>
+                    </select>
+                    <button class="btn btn-outline" onclick="exportExpiryReport()">
+                        <i data-lucide="download"></i>
+                        Export Report
+                    </button>
+                </div>
+
+                <div class="expiring-evidence-list" id="expiringEvidenceList">
+                    <!-- Expiring evidence will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Legal Hold Modal -->
+    <div id="createLegalHoldModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Legal Hold</h2>
+                <button class="modal-close" onclick="closeModal('createLegalHoldModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createLegalHoldForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="holdCaseId">Case ID *</label>
+                            <input type="text" id="holdCaseId" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="holdCourtOrder">Court Order Number</label>
+                            <input type="text" id="holdCourtOrder" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="holdReason">Legal Hold Reason *</label>
+                        <textarea id="holdReason" class="form-control" rows="3" required 
+                            placeholder="Describe the legal basis for this hold..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="holdLegalBasis">Legal Basis *</label>
+                        <select id="holdLegalBasis" class="form-control" required>
+                            <option value="">Select legal basis</option>
+                            <option value="litigation">Pending Litigation</option>
+                            <option value="investigation">Criminal Investigation</option>
+                            <option value="regulatory">Regulatory Inquiry</option>
+                            <option value="audit">Internal Audit</option>
+                            <option value="court_order">Court Order</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="holdEvidence">Select Evidence</label>
+                        <div class="evidence-selector">
+                            <input type="text" id="evidenceSearchInput" class="form-control" 
+                                placeholder="Search evidence to add to hold...">
+                            <div class="evidence-search-results" id="evidenceSearchResults"></div>
+                            <div class="selected-evidence" id="selectedEvidence"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="holdStakeholders">Notify Stakeholders</label>
+                        <div class="stakeholder-selector">
+                            <input type="text" id="stakeholderInput" class="form-control" 
+                                placeholder="Enter wallet addresses or email addresses...">
+                            <div class="selected-stakeholders" id="selectedStakeholders"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="holdEndDate">Expected End Date (Optional)</label>
+                        <input type="date" id="holdEndDate" class="form-control">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('createLegalHoldModal')">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="shield-check"></i>
+                            Create Legal Hold
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Retention Policy Modal -->
+    <div id="createPolicyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Retention Policy</h2>
+                <button class="modal-close" onclick="closeModal('createPolicyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createPolicyForm">
+                    <div class="form-group">
+                        <label for="policyName">Policy Name *</label>
+                        <input type="text" id="policyName" class="form-control" required 
+                            placeholder="e.g., Criminal Evidence - 7 Years">
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="policyRetentionDays">Retention Period (Days) *</label>
+                            <input type="number" id="policyRetentionDays" class="form-control" required min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="policyJurisdiction">Jurisdiction</label>
+                            <input type="text" id="policyJurisdiction" class="form-control" 
+                                placeholder="e.g., Federal, State, Local">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="policyEvidenceTypes">Evidence Types *</label>
+                        <div class="evidence-type-selector">
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="document"> Documents
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="image"> Images
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="video"> Videos
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="audio"> Audio
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="digital"> Digital Files
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="physical"> Physical Evidence
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="policyLegalBasis">Legal Basis *</label>
+                        <textarea id="policyLegalBasis" class="form-control" rows="3" required 
+                            placeholder="Cite relevant laws, regulations, or organizational policies..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="policyAutoArchive">
+                            Enable automatic archiving after retention period expires
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('createPolicyModal')">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="save"></i>
+                            Create Policy
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legal Hold Details Modal -->
+    <div id="legalHoldDetailsModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>Legal Hold Details</h2>
+                <button class="modal-close" onclick="closeModal('legalHoldDetailsModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="legalHoldDetailsContent">
+                <!-- Content populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="retention-policy-manager.js"></script>
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+            loadLegalHolds();
+            loadRetentionPolicies();
+            loadExpiringEvidence();
+            updateStats();
+        });
+
+        // Legal Hold Management
+        async function loadLegalHolds() {
+            try {
+                const response = await fetch('/api/legal-holds');
+                const holds = await response.json();
+                renderLegalHolds(holds);
+            } catch (error) {
+                console.error('Error loading legal holds:', error);
+            }
+        }
+
+        function renderLegalHolds(holds) {
+            const grid = document.getElementById('legalHoldsGrid');
+            
+            if (holds.length === 0) {
+                grid.innerHTML = '<p class="empty-state">No legal holds found</p>';
+                return;
+            }
+
+            grid.innerHTML = holds.map(hold => `
+                <div class="legal-hold-card ${hold.isActive ? 'active' : 'released'}">
+                    <div class="hold-header">
+                        <div class="hold-status">
+                            <span class="status-badge ${hold.isActive ? 'active' : 'released'}">
+                                ${hold.isActive ? 'Active' : 'Released'}
+                            </span>
+                        </div>
+                        <div class="hold-actions">
+                            <button class="btn btn-sm btn-outline" onclick="viewLegalHoldDetails('${hold.id}')">
+                                View Details
+                            </button>
+                            ${hold.isActive ? `
+                                <button class="btn btn-sm btn-danger" onclick="releaseLegalHold('${hold.id}')">
+                                    Release Hold
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="hold-content">
+                        <h3>Case: ${hold.caseId}</h3>
+                        <p class="hold-reason">${hold.reason}</p>
+                        <div class="hold-meta">
+                            <div class="meta-item">
+                                <i data-lucide="calendar"></i>
+                                <span>Created: ${new Date(hold.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div class="meta-item">
+                                <i data-lucide="file"></i>
+                                <span>${hold.evidenceIds.length} Evidence Items</span>
+                            </div>
+                            <div class="meta-item">
+                                <i data-lucide="scale"></i>
+                                <span>${hold.legalBasis}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Retention Policy Management
+        async function loadRetentionPolicies() {
+            try {
+                const response = await fetch('/api/retention-policies');
+                const policies = await response.json();
+                renderRetentionPolicies(policies);
+            } catch (error) {
+                console.error('Error loading retention policies:', error);
+            }
+        }
+
+        function renderRetentionPolicies(policies) {
+            const grid = document.getElementById('retentionPoliciesGrid');
+            
+            if (policies.length === 0) {
+                grid.innerHTML = '<p class="empty-state">No retention policies found</p>';
+                return;
+            }
+
+            grid.innerHTML = policies.map(policy => `
+                <div class="retention-policy-card">
+                    <div class="policy-header">
+                        <h3>${policy.name}</h3>
+                        <div class="policy-actions">
+                            <button class="btn btn-sm btn-outline" onclick="editRetentionPolicy('${policy.id}')">
+                                Edit
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteRetentionPolicy('${policy.id}')">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                    <div class="policy-content">
+                        <div class="policy-duration">
+                            <span class="duration-number">${policy.retentionDays}</span>
+                            <span class="duration-unit">days</span>
+                        </div>
+                        <div class="policy-details">
+                            <div class="detail-item">
+                                <strong>Evidence Types:</strong>
+                                <span>${policy.evidenceTypes.join(', ')}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Jurisdiction:</strong>
+                                <span>${policy.jurisdiction || 'General'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Auto-Archive:</strong>
+                                <span class="badge ${policy.autoArchive ? 'enabled' : 'disabled'}">
+                                    ${policy.autoArchive ? 'Enabled' : 'Disabled'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Expiring Evidence
+        async function loadExpiringEvidence() {
+            const timeframe = document.getElementById('expiryTimeframe').value;
+            try {
+                const response = await fetch(`/api/evidence/expiring?days=${timeframe}`);
+                const evidence = await response.json();
+                renderExpiringEvidence(evidence);
+            } catch (error) {
+                console.error('Error loading expiring evidence:', error);
+            }
+        }
+
+        function renderExpiringEvidence(evidence) {
+            const list = document.getElementById('expiringEvidenceList');
+            
+            if (evidence.length === 0) {
+                list.innerHTML = '<p class="empty-state">No expiring evidence found</p>';
+                return;
+            }
+
+            list.innerHTML = evidence.map(item => `
+                <div class="expiring-evidence-item">
+                    <div class="evidence-info">
+                        <h4>${item.title}</h4>
+                        <p>Case: ${item.caseId} | ID: ${item.id}</p>
+                    </div>
+                    <div class="expiry-info">
+                        <div class="expiry-date ${item.daysUntilExpiry <= 0 ? 'expired' : item.daysUntilExpiry <= 7 ? 'urgent' : 'warning'}">
+                            ${item.daysUntilExpiry <= 0 ? 'EXPIRED' : `${item.daysUntilExpiry} days left`}
+                        </div>
+                        <div class="expiry-actions">
+                            <button class="btn btn-sm btn-outline" onclick="extendRetention('${item.id}')">
+                                Extend
+                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="archiveEvidence('${item.id}')">
+                                Archive
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Modal Management
+        function openCreateLegalHoldModal() {
+            document.getElementById('createLegalHoldModal').classList.add('active');
+        }
+
+        function openCreatePolicyModal() {
+            document.getElementById('createPolicyModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Form Handlers
+        document.getElementById('createLegalHoldForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                caseId: document.getElementById('holdCaseId').value,
+                reason: document.getElementById('holdReason').value,
+                legalBasis: document.getElementById('holdLegalBasis').value,
+                courtOrder: document.getElementById('holdCourtOrder').value,
+                evidenceIds: getSelectedEvidenceIds(),
+                stakeholders: getSelectedStakeholders(),
+                endDate: document.getElementById('holdEndDate').value
+            };
+
+            try {
+                await retentionManager.createLegalHold(formData);
+                closeModal('createLegalHoldModal');
+                loadLegalHolds();
+                showNotification('Legal hold created successfully', 'success');
+            } catch (error) {
+                showNotification('Error creating legal hold: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('createPolicyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('policyName').value,
+                retentionDays: parseInt(document.getElementById('policyRetentionDays').value),
+                jurisdiction: document.getElementById('policyJurisdiction').value,
+                evidenceTypes: getSelectedEvidenceTypes(),
+                legalBasis: document.getElementById('policyLegalBasis').value,
+                autoArchive: document.getElementById('policyAutoArchive').checked
+            };
+
+            try {
+                await retentionManager.createRetentionPolicy(formData);
+                closeModal('createPolicyModal');
+                loadRetentionPolicies();
+                showNotification('Retention policy created successfully', 'success');
+            } catch (error) {
+                showNotification('Error creating retention policy: ' + error.message, 'error');
+            }
+        });
+
+        // Utility Functions
+        function getSelectedEvidenceIds() {
+            // Implementation for getting selected evidence IDs
+            return [];
+        }
+
+        function getSelectedStakeholders() {
+            // Implementation for getting selected stakeholders
+            return [];
+        }
+
+        function getSelectedEvidenceTypes() {
+            const checkboxes = document.querySelectorAll('.evidence-type-selector input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        function showNotification(message, type) {
+            // Implementation for showing notifications
+            console.log(`${type}: ${message}`);
+        }
+
+        async function updateStats() {
+            // Update statistics on the page
+            try {
+                const [policies, holds, expiring] = await Promise.all([
+                    fetch('/api/retention-policies').then(r => r.json()),
+                    fetch('/api/legal-holds').then(r => r.json()),
+                    fetch('/api/evidence/expiring?days=30').then(r => r.json())
+                ]);
+
+                document.getElementById('activePoliciesCount').textContent = policies.filter(p => p.isActive).length;
+                document.getElementById('expiringEvidenceCount').textContent = expiring.length;
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+    </script>
+</body>
+</html>

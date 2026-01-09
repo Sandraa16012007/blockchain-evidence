@@ -28,12 +28,31 @@ const roleMapping = {
 };
 
 document.addEventListener('DOMContentLoaded', function () {
+    // Initialize sections properly on page load
+    initializeSections();
     initializeApp();
     initializeLucideIcons();
     initializeNavigation();
     initializeRoleSelection();
     initializeScrollUp();
 });
+
+function initializeSections() {
+    // Hide all sections except wallet section on initial load
+    const sections = ['walletStatus', 'registrationSection', 'alreadyRegisteredSection', 'adminOptionsSection'];
+    sections.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.classList.add('hidden');
+        }
+    });
+    
+    // Show only the wallet section
+    const walletSection = document.getElementById('walletSection');
+    if (walletSection) {
+        walletSection.classList.remove('hidden');
+    }
+}
 
 function initializeLucideIcons() {
     if (typeof lucide !== 'undefined') {
@@ -50,7 +69,9 @@ async function initializeApp() {
     if (regForm) regForm.addEventListener('submit', handleRegistration);
     if (dashBtn) dashBtn.addEventListener('click', goToDashboard);
 
-    if (window.ethereum) {
+    // Only auto-connect if user explicitly had a connection before
+    const wasConnected = localStorage.getItem('wasConnected');
+    if (window.ethereum && wasConnected === 'true') {
         try {
             const accounts = await window.ethereum.request({ method: 'eth_accounts' });
             if (accounts.length > 0) {
@@ -58,6 +79,7 @@ async function initializeApp() {
             }
         } catch (error) {
             console.log('MetaMask not connected');
+            localStorage.removeItem('wasConnected');
         }
     }
 }
@@ -423,6 +445,33 @@ async function connectWallet() {
         }
 
         userAccount = accounts[0];
+        
+        // Mark as connected for future auto-connection
+        localStorage.setItem('wasConnected', 'true');
+
+        // Check if user already has a role selected
+        const selectedRole = localStorage.getItem('selectedRole');
+        const roleWizardCompleted = localStorage.getItem('roleWizardCompleted');
+        
+        if (roleWizardCompleted === 'true' && selectedRole) {
+            // Redirect to appropriate dashboard
+            const roleMapping = {
+                'public_viewer': 'dashboard-public.html',
+                'investigator': 'dashboard-investigator.html',
+                'forensic_analyst': 'dashboard-analyst.html',
+                'legal_professional': 'dashboard-legal.html',
+                'court_official': 'dashboard-court.html',
+                'evidence_manager': 'dashboard-manager.html',
+                'auditor': 'dashboard-auditor.html',
+                'admin': 'admin.html'
+            };
+            
+            const dashboardUrl = roleMapping[selectedRole] || 'dashboard.html';
+            showLoading(false);
+            hideConnectionLoader();
+            window.location.href = dashboardUrl;
+            return;
+        }
 
         // Show role selection wizard for new users
         if (typeof showRoleWizard === 'function') {
@@ -683,24 +732,19 @@ function logout() {
         lucide.createIcons();
     }
 
-    toggleSections('wallet');
+    // Reset to initial state
+    initializeSections();
     showAlert('Logged out successfully', 'info');
 }
 
 function disconnectWallet() {
     userAccount = null;
+    localStorage.removeItem('wasConnected');
 
     const walletStatus = document.getElementById('walletStatus');
-    const walletSection = document.getElementById('walletSection');
-    const registrationSection = document.getElementById('registrationSection');
-    const alreadyRegisteredSection = document.getElementById('alreadyRegisteredSection');
     const connectBtn = document.getElementById('connectWallet');
 
     if (walletStatus) walletStatus.classList.add('hidden');
-    if (walletSection) walletSection.classList.remove('hidden');
-    if (registrationSection) registrationSection.classList.add('hidden');
-    if (alreadyRegisteredSection) alreadyRegisteredSection.classList.add('hidden');
-
     if (connectBtn) {
         connectBtn.innerHTML = '<i data-lucide="link"></i> Connect MetaMask';
         connectBtn.disabled = false;
@@ -708,6 +752,8 @@ function disconnectWallet() {
         lucide.createIcons();
     }
 
+    // Reset to initial state
+    initializeSections();
     showAlert('Wallet disconnected successfully', 'info');
 }
 

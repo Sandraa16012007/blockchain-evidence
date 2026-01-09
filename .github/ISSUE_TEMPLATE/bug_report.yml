@@ -36,7 +36,7 @@ body:
     attributes:
       label: Affected component
       options:
-        - Frontend (React/Vue)
+        - Frontend
         - Backend (API)
         - Wallet Integration
         - Database

@@ -1,20 +1,19 @@
----
-name: 🚀 Feature Request
-about: Create a pull request for a new feature
+name: 🚀 Pull Request
+about: Create a pull request for changes
 title: 'feat: '
 labels: ['enhancement']
 assignees: ''
 ---
 
-## 📋 Feature Overview
+## 📋 Overview
 
-Brief description of the feature being implemented.
+Brief description of the changes being implemented.
 
-## ✨ Key Features
+## ✨ Key Changes
 
-- Feature 1
-- Feature 2
-- Feature 3
+- Change 1
+- Change 2
+- Change 3
 
 ## 🏗️ Technical Implementation
 
@@ -50,10 +49,6 @@ Brief description of the feature being implemented.
 - [ ] Documentation updated
 - [ ] Database migrations tested
 - [ ] Security review completed
-
-## 🎯 Addresses Issues
-
-Closes #issue-number
 
 ## 📸 Screenshots
 

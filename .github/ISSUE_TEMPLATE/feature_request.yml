@@ -8,15 +8,15 @@ body:
     attributes:
       label: Feature description
       description: What new capability?
-      placeholder: "NFT portfolio tracker with rarity scores"
+      placeholder: "Evidence tracking with enhanced security"
     validations:
       required: true
   - type: textarea
     id: motivation
     attributes:
       label: Why this feature?
-      description: User need or competitor gap?
-      placeholder: "Users request NFT tracking like OpenSea"
+      description: User need or system improvement?
+      placeholder: "Users request enhanced evidence tracking capabilities"
     validations:
       required: true
   - type: textarea
@@ -24,4 +24,4 @@ body:
     attributes:
       label: Implementation ideas
       description: APIs, libraries, rough approach?
-      placeholder: "Integrate Rarity.tools API"
+      placeholder: "Integrate blockchain verification API"
